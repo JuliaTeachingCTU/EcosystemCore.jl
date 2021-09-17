@@ -1,9 +1,11 @@
 module EcosystemCore
 
-export Grass, Sheep, Wolf, World
+using StatsBase
+
+export Grass, Sheep, Wolf, World, AbstractAgent, AbstractPlant, AbstractAnimal
 export fully_grown, fully_grown!, countdown, countdown!, incr_countdown!, reset!
 export energy, energy!, incr_energy!, Δenergy, reproduction_prob, food_prob
-export agent_step!, agent_count
+export agent_step!, eat!, eats, find_food, reproduce!
 
 abstract type AbstractAgent end
 abstract type AbstractPlant <: AbstractAgent end
