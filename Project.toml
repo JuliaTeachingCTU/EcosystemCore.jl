@@ -1,0 +1,4 @@
+name = "EcosystemCore"
+uuid = "3e0d8730-8ea0-4ee2-afe6-c85384c618a2"
+authors = ["Niklas <heimnikl@fel.cvut.cz>"]
+version = "0.1.0"
