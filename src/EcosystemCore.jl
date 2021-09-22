@@ -32,6 +32,14 @@ mutable struct Grass <: AbstractPlant
 end
 Grass(t) = Grass(false, t, rand(1:t))
 Grass() = Grass(2)
+function Base.show(io::IO,g::Grass)
+    p = if g.fully_grown
+        100
+    else
+        min(100-(g.countdown/g.regrowth_time*100),99)
+    end
+    print(io,"🌿 $(round(Int,p))% grown")
+end
 
 mutable struct Sheep{T<:Real} <: AbstractAnimal
     energy::T
@@ -39,6 +47,7 @@ mutable struct Sheep{T<:Real} <: AbstractAnimal
     reproduction_prob::T
     food_prob::T
 end
+Base.show(io::IO,s::Sheep) = print(io,"🐑 E=$(energy(s)) ΔE=$(Δenergy(s)) pr=$(reproduction_prob(s)) pf=$(food_prob(s))")
 
 mutable struct Wolf{T<:Real} <: AbstractAnimal
     energy::T
@@ -46,6 +55,7 @@ mutable struct Wolf{T<:Real} <: AbstractAnimal
     reproduction_prob::T
     food_prob::T
 end
+Base.show(io::IO,w::Wolf) = print(io,"🐺 E=$(energy(w)) ΔE=$(Δenergy(w)) pr=$(reproduction_prob(w)) pf=$(food_prob(w))")
 
 struct World{T<:AbstractAgent}
     agents::Vector{T}
