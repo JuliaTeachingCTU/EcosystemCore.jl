@@ -14,6 +14,7 @@ abstract type Plant <: Agent end
 struct World{A<:Agent}
     agents::Dict{Int,A}
 end
+World(agents::Vector{<:Agent}) = World(Dict(a.id=>a for a in agents))
 
 # optional code snippet: you can overload the `show` method to get custom
 # printing of your World
