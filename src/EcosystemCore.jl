@@ -12,27 +12,22 @@ abstract type Animal <: Agent end
 abstract type Plant <: Agent end
 
 struct World{A<:Agent}
-    #agents::Dict{Int,A}
-    agents::Vector{A}
+    agents::Dict{Int,A}
 end
 
 # optional code snippet: you can overload the `show` method to get custom
 # printing of your World
 function Base.show(io::IO, w::World)
     println(io, typeof(w))
-    map(a->println(io,"  $a"),w.agents)
+    for (id,a) in w.agents
+        println(io,"  $a id:$id")
+    end
 end
 
 function simulate!(world::World, iters::Int; callbacks=[])
     for i in 1:iters
-        for id in [a.id for a in world.agents]
-            #agent_step!(a[id],world)
-            a = nothing
-            for x in world.agents
-                if x.id == id
-                    a = x
-                end
-            end
+        for id in deepcopy(keys(world.agents))
+            a = world.agents[id]
             agent_step!(a,world)
         end
         for cb in callbacks
@@ -73,7 +68,7 @@ mutable struct Grass <: Plant
     regrowth_time::Int
     countdown::Int
 end
-Grass(id,t) = Grass(id, false, t, rand(1:t))
+Grass(id,t) = Grass(id,false, t, rand(1:t))
 
 # get field values
 fully_grown(a::Plant) = a.fully_grown
@@ -127,12 +122,12 @@ function eat!(wolf::Wolf, sheep::Sheep, w::World)
 end
 eat!(a::Animal,b::Nothing,w::World) = nothing
 
-kill_agent!(a::Animal, w::World) = deleteat!(w.agents, findall(x->x==a, w.agents))
+kill_agent!(a::Animal, w::World) = delete!(w.agents, a.id)
 
 using StatsBase
 function find_food(a::Animal, w::World)
     if rand() <= food_prob(a)
-        as = filter(x->eats(a,x), w.agents)
+        as = filter(x->eats(a,x), w.agents |> values |> collect)
         isempty(as) ? nothing : sample(as)
     end
 end
@@ -144,8 +139,9 @@ eats(::Agent,::Agent) = false
 function reproduce!(a::Animal, w::World)
     energy!(a, energy(a)/2)
     â = deepcopy(a)
-    â.id = maximum([a.id for a in w.agents])+1
-    push!(w.agents, â)
+    â.id = newid(w)  # kind of ugly...
+    w.agents[â.id] = â
 end
+newid(w::World) = maximum([a.id for a in values(w.agents)])+1
 
 end # module
