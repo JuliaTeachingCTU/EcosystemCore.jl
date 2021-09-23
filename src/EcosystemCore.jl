@@ -5,15 +5,15 @@ using StatsBase
 export World
 export Species, PlantSpecies, AnimalSpecies, Grass, Sheep, Wolf
 export Sex, Female, Male
-export AbstractAgent, Plant, Animal
+export Agent, Plant, Animal
 export agent_step!, eat!, eats, find_food, reproduce!
 
 export fully_grown, energy
 
 abstract type Species end
-abstract type AbstractAgent{S<:Species} end
+abstract type Agent{S<:Species} end
 
-struct World{T<:AbstractAgent}
+struct World{T<:Agent}
     agents::Vector{T}
 end
 function Base.show(io::IO, w::World)
@@ -25,7 +25,7 @@ end
 abstract type PlantSpecies <: Species end
 abstract type Grass <: PlantSpecies end
 
-mutable struct Plant{P<:PlantSpecies} <: AbstractAgent{P}
+mutable struct Plant{P<:PlantSpecies} <: Agent{P}
     fully_grown::Bool
     regrowth_time::Int
     countdown::Int
@@ -71,7 +71,7 @@ abstract type Sex end
 abstract type Male <: Sex end
 abstract type Female <: Sex end
 
-mutable struct Animal{A<:AnimalSpecies,S<:Sex,T<:Real} <: AbstractAgent{A}
+mutable struct Animal{A<:AnimalSpecies,S<:Sex,T<:Real} <: Agent{A}
     energy::T
     Δenergy::T
     reproduction_prob::T
@@ -90,12 +90,12 @@ function Base.show(io::IO, a::Animal{A,S}) where {A,S}
     print(io,"$A$S E=$e ΔE=$d pr=$pr pf=$pf")
 end
 
-function (A::Type{<:AnimalSpecies})(E::T,ΔE::T,pr::T,pf::T,S::Type{<:Sex}) where T<:Real
-    Animal{A,S,T}(E,ΔE,pr,pf)
-end
-function (A::Type{<:AnimalSpecies})(E::T,ΔE::T,pr::T,pf::T) where T<:Real
-    A(E,ΔE,pr,pf,rand(Bool) ? Female : Male)
-end
+# function (A::Type{<:AnimalSpecies})(E::T,ΔE::T,pr::T,pf::T,S::Type{<:Sex}) where T<:Real
+#     Animal{A,S,T}(E,ΔE,pr,pf)
+# end
+# function (A::Type{<:AnimalSpecies})(E::T,ΔE::T,pr::T,pf::T) where T<:Real
+#     A(E,ΔE,pr,pf,rand(Bool) ? Female : Male)
+# end
 
 function agent_step!(a::Animal, w::World)
     a.energy -= 1
@@ -120,7 +120,7 @@ end
 
 eats(::Animal{Sheep},::Plant{Grass}) = true
 eats(::Animal{Wolf},::Animal{Sheep}) = true
-eats(::AbstractAgent,::AbstractAgent) = false
+eats(::Agent,::Agent) = false
 
 function eat!(wolf::Animal{Wolf}, sheep::Animal{Sheep}, w::World)
     kill_agent!(sheep,w)
@@ -153,7 +153,7 @@ end
 
 mates(::Animal{A,Male}, ::Animal{A,Female}) where A<:AnimalSpecies = true
 mates(::Animal{A,Female}, ::Animal{A,Male}) where A<:AnimalSpecies = true
-mates(::AbstractAgent, ::AbstractAgent) = false
+mates(::Agent, ::Agent) = false
 
 
 
