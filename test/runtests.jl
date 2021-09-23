@@ -23,11 +23,12 @@ using Test
     @test energy(wolf) == 9.0
 
     # set repr prop to 1.0 and let the sheep reproduce
-    sheep = Sheep(2.0,1.0,1.0,1.0)
-    world = World([sheep])
-    agent_step!(sheep,world)
-    @test length(world.agents) == 2
-    @test energy(sheep) == 0.5
+    sheep1 = Sheep(2.0,1.0,1.0,1.0,Male)
+    sheep2 = Sheep(2.0,1.0,1.0,1.0,Female)
+    world = World([sheep1,sheep2])
+    agent_step!(sheep1,world)
+    @test length(world.agents) == 3
+    @test energy(sheep1) == 0.5
 
     # check wolf eating sheep
     sheep = Sheep(2.0,1.0,0.0,1.0)
