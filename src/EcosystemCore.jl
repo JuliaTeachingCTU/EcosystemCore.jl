@@ -2,7 +2,7 @@ module EcosystemCore
 
 using StatsBase
 
-export Grass, Sheep, Wolf, World, AbstractAgent, AbstractPlant, AbstractAnimal
+export Grass, Sheep, Wolf, World, Agent, Plant, Animal
 export fully_grown, fully_grown!, countdown, countdown!, incr_countdown!, reset!
 export energy, energy!, incr_energy!, Δenergy, reproduction_prob, food_prob
 export agent_step!, eat!, eats, find_food, reproduce!, simulate!
@@ -11,17 +11,20 @@ abstract type Agent end
 abstract type Animal <: Agent end
 abstract type Plant <: Agent end
 
-struct World{A<:Agent}
+mutable struct World{A<:Agent}
     agents::Dict{Int,A}
+    max_id::Int
 end
-World(agents::Vector{<:Agent}) = World(Dict(a.id=>a for a in agents))
+function World(agents::Vector{<:Agent})
+    World(Dict(id(a)=>a for a in agents), maximum(id.(agents)))
+end
 
 # optional code snippet: you can overload the `show` method to get custom
 # printing of your World
 function Base.show(io::IO, w::World)
     println(io, typeof(w))
-    for (id,a) in w.agents
-        println(io,"  $a id:$id")
+    for (_,a) in w.agents
+        println(io,"  $a")
     end
 end
 
@@ -127,7 +130,6 @@ eat!(a::Animal,b::Nothing,w::World) = nothing
 
 kill_agent!(a::Animal, w::World) = delete!(w.agents, id(a))
 
-using StatsBase
 function find_food(a::Animal, w::World)
     if rand() <= food_prob(a)
         as = filter(x->eats(a,x), w.agents |> values |> collect)
@@ -142,9 +144,10 @@ eats(::Agent,::Agent) = false
 function reproduce!(a::A, w::World) where A
     energy!(a, energy(a)/2)
     a_vals = [getproperty(a,n) for n in fieldnames(A) if n!=:id]
-    â = A(newid(w), a_vals...)
+    new_id = w.max_id + 1
+    â = A(new_id, a_vals...)
     w.agents[id(â)] = â
+    w.max_id = new_id
 end
-newid(w::World) = maximum([a.id for a in values(w.agents)])+1
 
 end # module
