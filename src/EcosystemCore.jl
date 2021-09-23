@@ -28,6 +28,7 @@ end
 function simulate!(world::World, iters::Int; callbacks=[])
     for i in 1:iters
         for id in deepcopy(keys(world.agents))
+            !haskey(world.agents,id) && continue
             a = world.agents[id]
             agent_step!(a,world)
         end
@@ -72,6 +73,7 @@ end
 Grass(id,t) = Grass(id,false, t, rand(1:t))
 
 # get field values
+id(a::Agent) = a.id
 fully_grown(a::Plant) = a.fully_grown
 countdown(a::Plant) = a.countdown
 
@@ -123,7 +125,7 @@ function eat!(wolf::Wolf, sheep::Sheep, w::World)
 end
 eat!(a::Animal,b::Nothing,w::World) = nothing
 
-kill_agent!(a::Animal, w::World) = delete!(w.agents, a.id)
+kill_agent!(a::Animal, w::World) = delete!(w.agents, id(a))
 
 using StatsBase
 function find_food(a::Animal, w::World)
@@ -137,11 +139,11 @@ eats(::Sheep,::Grass) = true
 eats(::Wolf,::Sheep) = true
 eats(::Agent,::Agent) = false
 
-function reproduce!(a::Animal, w::World)
+function reproduce!(a::A, w::World) where A
     energy!(a, energy(a)/2)
-    â = deepcopy(a)
-    â.id = newid(w)  # kind of ugly...
-    w.agents[â.id] = â
+    a_vals = [getproperty(a,n) for n in fieldnames(A) if n!=:id]
+    â = A(newid(w), a_vals...)
+    w.agents[id(â)] = â
 end
 newid(w::World) = maximum([a.id for a in values(w.agents)])+1
 
