@@ -53,7 +53,6 @@ food_prob(a::Animal) = a.food_prob
 energy!(a::Animal, e) = a.energy = e
 incr_energy!(a::Animal, Δe) = energy!(a, energy(a)+Δe)
 
-
 function simulate!(world::World, iters::Int; callbacks=[])
     for i in 1:iters
         for id in deepcopy(keys(world.agents))

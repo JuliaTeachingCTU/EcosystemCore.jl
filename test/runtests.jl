@@ -2,6 +2,7 @@ using EcosystemCore
 using Test
 
 @testset "EcosystemCore" begin
+
     grass1 = Grass(1,false,2,2)
     grass2 = Grass(2,false,2,2)
     sheep  = Sheep(3,2.0,1.0,0.0,0.0)
