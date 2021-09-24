@@ -1,23 +1,21 @@
-mutable struct Animal{A<:AnimalSpecies,S<:Sex,T<:Real} <: Agent{A}
+mutable struct Animal{A<:AnimalSpecies,S<:Sex} <: Agent{A}
     id::Int
-    energy::T
-    Δenergy::T
-    reproduction_prob::T
-    food_prob::T
+    energy::Float64
+    Δenergy::Float64
+    reproduction_prob::Float64
+    food_prob::Float64
 end
 
-# constructor for all Animal{<:AnimalSpecies} callable as AnimalSpecies(...)
-function (A::Type{<:AnimalSpecies})(id::Int,E::T,ΔE::T,pr::T,pf::T,S::Type{<:Sex}) where T<:Real
-    Animal{A,S,T}(id,E,ΔE,pr,pf)
-end
-function (A::Type{<:AnimalSpecies})(id::Int,E::T,ΔE::T,pr::T,pf::T) where T<:Real
-    A(id,E,ΔE,pr,pf,rand(Bool) ? Female : Male)
+function (A::Type{<:AnimalSpecies})(id::Int, E, ΔE, pr, pf, S=rand(Bool) ? Female : Male)
+    Animal{A,S}(id,E,ΔE,pr,pf)
 end
 
 function agent_step!(a::Animal, w::World)
     incr_energy!(a,-1)
-    dinner = find_food(a,w)
-    eat!(a, dinner, w)
+    if rand() <= food_prob(a)
+        dinner = find_food(a,w)
+        eat!(a, dinner, w)
+    end
     if energy(a) <= 0
         kill_agent!(a,w)
         return
@@ -29,47 +27,60 @@ function agent_step!(a::Animal, w::World)
 end
 
 function find_food(a::Animal, w::World)
-    if rand() <= food_prob(a)
-        as = filter(x->eats(a,x), w.agents |> values |> collect)
-        isempty(as) ? nothing : sample(as)
-    end
+    as = filter(x->eats(a,x), w.agents |> values |> collect)
+    isempty(as) ? nothing : sample(as)
 end
-
-function reproduce!(a::A, w::World) where A
-    energy!(a, energy(a)/2)
-    a_vals = [getproperty(a,n) for n in fieldnames(A) if n!=:id]
-    new_id = w.max_id + 1
-    â = A(new_id, a_vals...)
-    w.agents[id(â)] = â
-    w.max_id = new_id
-end
-
-kill_agent!(a::Animal, w::World) = delete!(w.agents, id(a))
 
 eats(::Animal{Sheep},::Plant{Grass}) = true
 eats(::Animal{Wolf},::Animal{Sheep}) = true
 eats(::Agent,::Agent) = false
 
-function eat!(wolf::Animal{Wolf}, sheep::Animal{Sheep}, w::World)
-    kill_agent!(sheep,w)
-    wolf.energy += wolf.Δenergy
+function eat!(a::Animal{Wolf}, b::Animal{Sheep}, w::World)
+    incr_energy!(a, energy(b)*Δenergy(a))
+    kill_agent!(b,w)
 end
-function eat!(sheep::Animal{Sheep}, grass::Plant{Grass}, w::World)
-    if grass.fully_grown
-        grass.fully_grown = false
-        sheep.energy += sheep.Δenergy
-    end
+function eat!(a::Animal{Sheep}, b::Plant{Grass}, w::World)
+    incr_energy!(a, size(b)*Δenergy(a))
+    kill_agent!(b,w)
 end
 eat!(::Animal,::Nothing,::World) = nothing
+
+function reproduce!(a::A, w::World) where A<:Animal
+    b = find_mate(a,w)
+    if !isnothing(b)
+        energy!(a, energy(a)/2)
+        a_vals = [getproperty(a,n) for n in fieldnames(A) if n!=:id]
+        new_id = w.max_id + 1
+        â = A(new_id, a_vals...)
+        w.agents[id(â)] = â
+        w.max_id = new_id
+    end
+end
+
+function find_mate(a::Animal, w::World)
+    bs = filter(x->mates(a,x), w.agents |> values |> collect)
+    isempty(bs) ? nothing : sample(bs)
+end
+
+function mates(a,b)
+    error("""You have to specify the mating behaviour of your agents by overloading `EcosystemCore.mates` e.g. like this:
+
+        EcosystemCore.mates(a::Animal{S,Female}, b::Animal{S,Male}) where S<:Species = true
+        EcosystemCore.mates(a::Animal{S,Male}, b::Animal{S,Female}) where S<:Species = true
+        EcosystemCore.mates(a::Agent, b::Agent) = false
+    """)
+end
+
+kill_agent!(a::Animal, w::World) = delete!(w.agents, id(a))
 
 Base.show(io::IO, ::Type{Sheep}) = print(io,"🐑")
 Base.show(io::IO, ::Type{Wolf}) = print(io,"🐺")
 Base.show(io::IO, ::Type{Male}) = print(io,"♂")
 Base.show(io::IO, ::Type{Female}) = print(io,"♀")
 function Base.show(io::IO, a::Animal{A,S}) where {A,S}
-    e = a.energy
-    d = a.Δenergy
-    pr = a.reproduction_prob
-    pf = a.food_prob
+    e = energy(a)
+    d = Δenergy(a)
+    pr = reproduction_prob(a)
+    pf = food_prob(a)
     print(io,"$A$S #$(id(a)) E=$e ΔE=$d pr=$pr pf=$pf")
 end
