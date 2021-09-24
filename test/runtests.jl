@@ -39,7 +39,7 @@ using Test
 
 
     ss = [Sheep(1,5.0,2.0,1.0,1.0),Sheep(2,5.0,2.0,1.0,1.0)]
-    world = World(Dict(s.id=>s for s in ss))
+    world = World(ss)
     simulate!(world, 1)
     @test length(world.agents) == 4
     simulate!(world, 1)
