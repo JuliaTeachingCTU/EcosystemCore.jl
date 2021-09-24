@@ -1,20 +1,23 @@
 using EcosystemCore
 using Test
 
-@testset "EcosystemCore!" begin
-    grass1 = Grass(1,false,2,2)
-    grass2 = Grass(2,false,2,2)
+EcosystemCore.mates(a::Animal{S},b::Animal{S}) where S<:Species = true
+EcosystemCore.mates(a::Agent, b::Agent) = false
+
+@testset "EcosystemCore" begin
+
+    grass1 = Grass(1,1,2)
+    grass2 = Grass(2,2,2)
     sheep  = Sheep(3,2.0,1.0,0.0,0.0)
     wolf   = Wolf(4,10.0,5.0,0.0,0.0)
     world  = World([grass1,grass2,sheep,wolf])
 
     # check growth
+    @test size(grass1) == 1
     agent_step!(grass1,world)
-    @test fully_grown(grass1) == false
+    @test size(grass1) == 2
     agent_step!(grass1,world)
-    @test fully_grown(grass1) == false
-    agent_step!(grass1,world)
-    @test fully_grown(grass1) == true
+    @test size(grass1) == 2
 
     # check energy reduction
     agent_step!(sheep,world)
@@ -23,28 +26,28 @@ using Test
     @test energy(wolf) == 9.0
 
     # set repr prop to 1.0 and let the sheep reproduce
-    sheep = Sheep(1,2.0,1.0,1.0,1.0)
-    world = World([sheep])
-    agent_step!(sheep,world)
-    @test length(world.agents) == 2
-    @test energy(sheep) == 0.5
+    sheep1 = Sheep(1,2.0,1.0,1.0,1.0,Male)
+    sheep2 = Sheep(2,2.0,1.0,1.0,1.0,Female)
+    world = World([sheep1,sheep2])
+    agent_step!(sheep1,world)
+    @test length(world.agents) == 3
+    @test energy(sheep1) == 0.5
 
     # check wolf eating sheep
     sheep = Sheep(1,2.0,1.0,0.0,1.0)
     wolf  = Wolf(2,10.0,5.0,0.0,1.0)
     world = World([sheep,wolf])
     agent_step!(wolf, world)
-    @test energy(wolf) == 14.0
+    @test energy(wolf) == 19.0
     @test length(world.agents) == 1
-
 
     ss = [Sheep(1,5.0,2.0,1.0,1.0),Sheep(2,5.0,2.0,1.0,1.0)]
     world = World(ss)
-    simulate!(world, 1)
+    world_step!(world)
     @test length(world.agents) == 4
-    simulate!(world, 1)
+    world_step!(world)
     @test length(world.agents) == 8
-    simulate!(world, 1)
+    world_step!(world)
     @test length(world.agents) == 0
 
 end
