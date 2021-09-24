@@ -2,60 +2,46 @@ module EcosystemCore
 
 using StatsBase
 
-export Grass, Sheep, Wolf, World, AbstractAgent, AbstractPlant, AbstractAnimal
+export Grass, Sheep, Wolf, World, Agent, Plant, Animal
 export fully_grown, fully_grown!, countdown, countdown!, incr_countdown!, reset!
 export energy, energy!, incr_energy!, Δenergy, reproduction_prob, food_prob
-export agent_step!, eat!, eats, find_food, reproduce!
+export agent_step!, eat!, eats, find_food, reproduce!, simulate!
 
-abstract type AbstractAgent end
-abstract type AbstractPlant <: AbstractAgent end
-abstract type AbstractAnimal <: AbstractAgent end
+abstract type Agent end
+abstract type Animal <: Agent end
+abstract type Plant <: Agent end
 
-fully_grown(a::AbstractPlant) = a.fully_grown
-fully_grown!(a::AbstractPlant, b::Bool) = a.fully_grown = b
-countdown(a::AbstractPlant) = a.countdown
-countdown!(a::AbstractPlant, c::Int) = a.countdown = c
-incr_countdown!(a::AbstractPlant, Δc::Int) = countdown!(a, countdown(a)+Δc)
-reset!(a::AbstractPlant) = a.countdown = a.regrowth_time
-
-energy(a::AbstractAnimal) = a.energy
-energy!(a::AbstractAnimal, e) = a.energy = e
-incr_energy!(a::AbstractAnimal, Δe) = energy!(a, energy(a)+Δe)
-Δenergy(a::AbstractAnimal) = a.Δenergy
-reproduction_prob(a::AbstractAnimal) = a.reproduction_prob
-food_prob(a::AbstractAnimal) = a.food_prob
-
-mutable struct Grass <: AbstractPlant
-    fully_grown::Bool
-    regrowth_time::Int
-    countdown::Int
+mutable struct World{A<:Agent}
+    agents::Dict{Int,A}
+    max_id::Int
 end
-Grass(t) = Grass(false, t, rand(1:t))
-Grass() = Grass(2)
-
-mutable struct Sheep{T<:Real} <: AbstractAnimal
-    energy::T
-    Δenergy::T
-    reproduction_prob::T
-    food_prob::T
+function World(agents::Vector{<:Agent})
+    World(Dict(id(a)=>a for a in agents), maximum(id.(agents)))
 end
 
-mutable struct Wolf{T<:Real} <: AbstractAnimal
-    energy::T
-    Δenergy::T
-    reproduction_prob::T
-    food_prob::T
-end
-
-struct World{T<:AbstractAgent}
-    agents::Vector{T}
-end
+# optional code snippet: you can overload the `show` method to get custom
+# printing of your World
 function Base.show(io::IO, w::World)
     println(io, typeof(w))
-    map(a->println(io,"  $a"),w.agents)
+    for (_,a) in w.agents
+        println(io,"  $a")
+    end
 end
 
-function agent_step!(a::AbstractPlant, w::World)
+function simulate!(world::World, iters::Int; callbacks=[])
+    for i in 1:iters
+        for id in deepcopy(keys(world.agents))
+            !haskey(world.agents,id) && continue
+            a = world.agents[id]
+            agent_step!(a,world)
+        end
+        for cb in callbacks
+            cb(world)
+        end
+    end
+end
+
+function agent_step!(a::Plant, w::World)
     if !fully_grown(a)
         if countdown(a) <= 0
             fully_grown!(a,true)
@@ -67,11 +53,11 @@ function agent_step!(a::AbstractPlant, w::World)
     return a
 end
 
-function agent_step!(a::AbstractAnimal, w::World)
+function agent_step!(a::Animal, w::World)
     incr_energy!(a,-1)
     dinner = find_food(a,w)
     eat!(a, dinner, w)
-    if energy(a) < 0
+    if energy(a) <= 0
         kill_agent!(a,w)
         return
     end
@@ -81,34 +67,87 @@ function agent_step!(a::AbstractAnimal, w::World)
     return a
 end
 
-function find_food(a::AbstractAnimal, w::World)
-    if rand() <= food_prob(a)
-        as = filter(x->eats(a,x), w.agents)
-        isempty(as) ? nothing : sample(as)
-    end
+mutable struct Grass <: Plant
+    id::Int
+    fully_grown::Bool
+    regrowth_time::Int
+    countdown::Int
+end
+Grass(id,t) = Grass(id,false, t, rand(1:t))
+
+# get field values
+id(a::Agent) = a.id
+fully_grown(a::Plant) = a.fully_grown
+countdown(a::Plant) = a.countdown
+
+# set field values
+# (exclamation marks `!` indicate that the function is mutating its arguments)
+fully_grown!(a::Plant, b::Bool) = a.fully_grown = b
+countdown!(a::Plant, c::Int) = a.countdown = c
+incr_countdown!(a::Plant, Δc::Int) = countdown!(a, countdown(a)+Δc)
+
+# reset plant couter once it's grown
+reset!(a::Plant) = a.countdown = a.regrowth_time
+
+mutable struct Sheep <: Animal
+    id::Int
+    energy::Float64
+    Δenergy::Float64
+    reproduction_prob::Float64
+    food_prob::Float64
 end
 
-eats(::Sheep,::Grass) = true
-eats(::Wolf,::Sheep) = true
-eats(::AbstractAgent,::AbstractAgent) = false
+# get field values
+energy(a::Animal) = a.energy
+Δenergy(a::Animal) = a.Δenergy
+reproduction_prob(a::Animal) = a.reproduction_prob
+food_prob(a::Animal) = a.food_prob
 
-function eat!(wolf::Wolf, sheep::Sheep, w::World)
-    kill_agent!(sheep,w)
-    incr_energy!(wolf, Δenergy(wolf))
-end
+# set field values
+energy!(a::Animal, e) = a.energy = e
+incr_energy!(a::Animal, Δe) = energy!(a, energy(a)+Δe)
+
 function eat!(sheep::Sheep, grass::Grass, w::World)
     if fully_grown(grass)
         fully_grown!(grass, false)
         incr_energy!(sheep, Δenergy(sheep))
     end
 end
-eat!(::AbstractAnimal,::Nothing,::World) = nothing
 
-function reproduce!(a::AbstractAnimal, w::World)
-    energy!(a, energy(a)/2)
-    push!(w.agents, deepcopy(a))
+mutable struct Wolf <: Animal
+    id::Int
+    energy::Float64
+    Δenergy::Float64
+    reproduction_prob::Float64
+    food_prob::Float64
 end
 
-kill_agent!(a::AbstractAnimal, w::World) = deleteat!(w.agents, findall(x->x==a, w.agents))
+function eat!(wolf::Wolf, sheep::Sheep, w::World)
+    kill_agent!(sheep,w)
+    incr_energy!(wolf, Δenergy(wolf))
+end
+eat!(a::Animal,b::Nothing,w::World) = nothing
+
+kill_agent!(a::Animal, w::World) = delete!(w.agents, id(a))
+
+function find_food(a::Animal, w::World)
+    if rand() <= food_prob(a)
+        as = filter(x->eats(a,x), w.agents |> values |> collect)
+        isempty(as) ? nothing : sample(as)
+    end
+end
+
+eats(::Sheep,::Grass) = true
+eats(::Wolf,::Sheep) = true
+eats(::Agent,::Agent) = false
+
+function reproduce!(a::A, w::World) where A
+    energy!(a, energy(a)/2)
+    a_vals = [getproperty(a,n) for n in fieldnames(A) if n!=:id]
+    new_id = w.max_id + 1
+    â = A(new_id, a_vals...)
+    w.agents[id(â)] = â
+    w.max_id = new_id
+end
 
 end # module
