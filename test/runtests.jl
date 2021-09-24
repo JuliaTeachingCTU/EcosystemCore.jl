@@ -1,8 +1,6 @@
 using EcosystemCore
 using Test
 
-EcosystemCore.mates(a::Animal{S},b::Animal{S}) where S<:Species = true
-EcosystemCore.mates(a::Agent, b::Agent) = false
 
 @testset "EcosystemCore" begin
 
@@ -26,12 +24,11 @@ EcosystemCore.mates(a::Agent, b::Agent) = false
     @test energy(wolf) == 9.0
 
     # set repr prop to 1.0 and let the sheep reproduce
-    sheep1 = Sheep(1,2.0,1.0,1.0,1.0,Male)
-    sheep2 = Sheep(2,2.0,1.0,1.0,1.0,Female)
-    world = World([sheep1,sheep2])
-    agent_step!(sheep1,world)
-    @test length(world.agents) == 3
-    @test energy(sheep1) == 0.5
+    sheep = Sheep(1,2.0,1.0,1.0,1.0)
+    world = World([sheep])
+    agent_step!(sheep,world)
+    @test length(world.agents) == 2
+    @test energy(sheep) == 0.5
 
     # check wolf eating sheep
     sheep = Sheep(1,2.0,1.0,0.0,1.0)
