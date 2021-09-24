@@ -6,6 +6,13 @@ mutable struct Animal{A<:AnimalSpecies,S<:Sex} <: Agent{A}
     food_prob::Float64
 end
 
+energy(a::Animal) = a.energy
+Δenergy(a::Animal) = a.Δenergy
+reproduction_prob(a::Animal) = a.reproduction_prob
+food_prob(a::Animal) = a.food_prob
+energy!(a::Animal, e) = a.energy = e
+incr_energy!(a::Animal, Δe) = energy!(a, energy(a)+Δe)
+
 function (A::Type{<:AnimalSpecies})(id::Int, E, ΔE, pr, pf, S=rand(Bool) ? Female : Male)
     Animal{A,S}(id,E,ΔE,pr,pf)
 end

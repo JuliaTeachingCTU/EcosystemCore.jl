@@ -23,23 +23,10 @@ abstract type Sex end
 abstract type Male <: Sex end
 abstract type Female <: Sex end
 
+id(a::Agent) = a.id
+
 include("world.jl")
 include("plant.jl")
 include("animal.jl")
-
-# accessors for plants and animals
-
-id(a::Agent) = a.id
-
-Base.size(a::Plant) = a.size
-max_size(a::Plant) = a.max_size
-grow!(a::Plant) = a.size += 1
-
-energy(a::Animal) = a.energy
-Δenergy(a::Animal) = a.Δenergy
-reproduction_prob(a::Animal) = a.reproduction_prob
-food_prob(a::Animal) = a.food_prob
-energy!(a::Animal, e) = a.energy = e
-incr_energy!(a::Animal, Δe) = energy!(a, energy(a)+Δe)
 
 end # module

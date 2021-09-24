@@ -4,6 +4,10 @@ mutable struct Plant{P<:PlantSpecies} <: Agent{P}
     max_size::Int
 end
 
+Base.size(a::Plant) = a.size
+max_size(a::Plant) = a.max_size
+grow!(a::Plant) = a.size += 1
+
 # constructor for all Plant{<:PlantSpecies} callable as PlantSpecies(...)
 (A::Type{<:PlantSpecies})(id, s, m) = Plant{A}(id,s,m)
 (A::Type{<:PlantSpecies})(id, m) = (A::Type{<:PlantSpecies})(id,rand(1:m),m)
