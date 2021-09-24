@@ -137,8 +137,6 @@ function eat!(sheep::Animal{Sheep}, grass::Plant{Grass}, w::World)
 end
 eat!(::Animal,::Nothing,::World) = nothing
 
-
-
 function simulate!(world::World, iters::Int; callbacks=[])
     for i in 1:iters
         for id in deepcopy(keys(world.agents))
@@ -184,6 +182,7 @@ function find_food(a::Animal, w::World)
         isempty(as) ? nothing : sample(as)
     end
 end
+
 
 function reproduce!(a::A, w::World) where A
     energy!(a, energy(a)/2)
