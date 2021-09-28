@@ -5,7 +5,7 @@ end
 
 function World(agents::Vector{<:Agent})
     ids = id.(agents)
-    unique(ids) != length(agents) || error("Not all agents have unique IDs!")
+    length(unique(ids)) == length(agents) || error("Not all agents have unique IDs!")
     World(Dict(id(a)=>a for a in agents), maximum(ids))
 end
 

@@ -5,6 +5,12 @@ EcosystemCore.mates(a::Animal{S},b::Animal{S}) where S<:Species = true
 EcosystemCore.mates(a::Agent, b::Agent) = false
 
 @testset "EcosystemCore" begin
+    g = Grass(1,10)
+    @test_throws ErrorException World([g,g])
+
+    @test repr(Grass(1,1,1)) == "🌿  #1 100% grown"
+    @test repr(Animal{Sheep,Male}(1,1,1,1,1)) == "🐑♂ #1 E=1.0 ΔE=1.0 pr=1.0 pf=1.0"
+    @test repr(Animal{Wolf,Female}(1,1,1,1,1)) == "🐺♀ #1 E=1.0 ΔE=1.0 pr=1.0 pf=1.0"
 
     grass1 = Grass(1,1,2)
     grass2 = Grass(2,2,2)
