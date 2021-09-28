@@ -2,14 +2,14 @@ mutable struct Animal{A<:AnimalSpecies,S<:Sex} <: Agent{A}
     id::Int
     energy::Float64
     Δenergy::Float64
-    reproduction_prob::Float64
-    food_prob::Float64
+    reprprob::Float64
+    foodprob::Float64
 end
 
 energy(a::Animal) = a.energy
 Δenergy(a::Animal) = a.Δenergy
-reproduction_prob(a::Animal) = a.reproduction_prob
-food_prob(a::Animal) = a.food_prob
+reprprob(a::Animal) = a.reprprob
+foodprob(a::Animal) = a.foodprob
 energy!(a::Animal, e) = a.energy = e
 incr_energy!(a::Animal, Δe) = energy!(a, energy(a)+Δe)
 
@@ -19,7 +19,7 @@ end
 
 function agent_step!(a::Animal, w::World)
     incr_energy!(a,-1)
-    if rand() <= food_prob(a)
+    if rand() <= foodprob(a)
         dinner = find_food(a,w)
         eat!(a, dinner, w)
     end
@@ -27,7 +27,7 @@ function agent_step!(a::Animal, w::World)
         kill_agent!(a,w)
         return
     end
-    if rand() <= reproduction_prob(a)
+    if rand() <= reprprob(a)
         reproduce!(a,w)
     end
     return a
@@ -87,7 +87,7 @@ Base.show(io::IO, ::Type{Female}) = print(io,"♀")
 function Base.show(io::IO, a::Animal{A,S}) where {A,S}
     e = energy(a)
     d = Δenergy(a)
-    pr = reproduction_prob(a)
-    pf = food_prob(a)
+    pr = reprprob(a)
+    pf = foodprob(a)
     print(io,"$A$S #$(id(a)) E=$e ΔE=$d pr=$pr pf=$pf")
 end
