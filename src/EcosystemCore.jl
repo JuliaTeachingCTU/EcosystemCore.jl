@@ -7,7 +7,7 @@ export Species, PlantSpecies, AnimalSpecies, Grass, Sheep, Wolf
 export Sex, Female, Male
 export Agent, Plant, Animal
 export agent_step!, eat!, eats, find_food, reproduce!, world_step!
-export energy, energy!, incr_energy!, Δenergy, reproduction_prob, food_prob
+export energy, energy!, incr_energy!, Δenergy, reprprob, foodprob
 
 abstract type Species end
 abstract type Agent{S<:Species} end
