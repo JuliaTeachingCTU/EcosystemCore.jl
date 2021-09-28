@@ -33,10 +33,12 @@ function agent_step!(a::Animal, w::World)
     return a
 end
 
-function find_food(a::Animal, w::World)
-    as = filter(x->eats(a,x), w.agents |> values |> collect)
-    isempty(as) ? nothing : sample(as)
+function find_rand(f, w::World)
+    xs = filter(f, w.agents |> values |> collect)
+    isempty(xs) ? nothing : sample(xs)
 end
+
+find_food(a::Animal, w::World) = find_rand(x->eats(a,x),w)
 
 eats(::Animal{Sheep},::Plant{Grass}) = true
 eats(::Animal{Wolf},::Animal{Sheep}) = true
@@ -64,10 +66,7 @@ function reproduce!(a::A, w::World) where A<:Animal
     end
 end
 
-function find_mate(a::Animal, w::World)
-    bs = filter(x->mates(a,x), w.agents |> values |> collect)
-    isempty(bs) ? nothing : sample(bs)
-end
+find_mate(a::Animal, w::World) = find_rand(x->mates(a,x),w)
 
 function mates(a,b)
     error("""You have to specify the mating behaviour of your agents by overloading `EcosystemCore.mates` e.g. like this:
