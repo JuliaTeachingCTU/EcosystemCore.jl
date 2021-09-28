@@ -8,9 +8,13 @@ EcosystemCore.mates(a::Agent, b::Agent) = false
     g = Grass(1,10)
     @test_throws ErrorException World([g,g])
 
-    @test repr(Grass(1,1,1)) == "🌿  #1 100% grown"
-    @test repr(Animal{Sheep,Male}(1,1,1,1,1)) == "🐑♂ #1 E=1.0 ΔE=1.0 pr=1.0 pf=1.0"
-    @test repr(Animal{Wolf,Female}(1,1,1,1,1)) == "🐺♀ #1 E=1.0 ΔE=1.0 pr=1.0 pf=1.0"
+    g = Grass(1,1,1)
+    s = Animal{Sheep,Male}(2,1,1,1,1)
+    w = Animal{Wolf,Female}(3,1,1,1,1)
+    @test repr(g) == "🌿  #1 100% grown"
+    @test repr(s) == "🐑♂ #2 E=1.0 ΔE=1.0 pr=1.0 pf=1.0"
+    @test repr(w) == "🐺♀ #3 E=1.0 ΔE=1.0 pr=1.0 pf=1.0"
+    @test_nowarn repr(World([g,s,w]))
 
     grass1 = Grass(1,1,2)
     grass2 = Grass(2,2,2)
