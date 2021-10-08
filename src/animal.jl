@@ -40,7 +40,7 @@ end
 
 find_food(a::Animal, w::World) = find_rand(x->eats(a,x),w)
 
-eats(::Animal{Sheep},::Plant{Grass}) = true
+eats(::Animal{Sheep},p::Plant{Grass}) = size(p)>0
 eats(::Animal{Wolf},::Animal{Sheep}) = true
 eats(::Agent,::Agent) = false
 
@@ -50,7 +50,7 @@ function eat!(a::Animal{Wolf}, b::Animal{Sheep}, w::World)
 end
 function eat!(a::Animal{Sheep}, b::Plant{Grass}, w::World)
     incr_energy!(a, size(b)*Δenergy(a))
-    kill_agent!(b,w)
+    b.size = 0
 end
 eat!(::Animal,::Nothing,::World) = nothing
 

@@ -18,8 +18,6 @@ function agent_step!(a::Plant, w::World)
     end
 end
 
-kill_agent!(a::Plant, w::World) = a.size = 0
-
 function Base.show(io::IO, p::Plant{P}) where P
     x = size(p)/max_size(p) * 100
     print(io,"$P  #$(id(p)) $(round(Int,x))% grown")

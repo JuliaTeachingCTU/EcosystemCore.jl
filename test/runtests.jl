@@ -35,6 +35,16 @@ EcosystemCore.mates(a::Agent, b::Agent) = false
     agent_step!(wolf,world)
     @test energy(wolf) == 9.0
 
+    # check sheep eating grass
+    grass1 = Grass(2,2,2)
+    sheep  = Sheep(3,2.0,1.0,0.0,1.0)
+    world  = World([grass1,sheep])
+    agent_step!(sheep,world)
+    @test energy(sheep) == 3.0
+    @test size(grass1) == 0.0
+    agent_step!(sheep,world)
+    @test energy(sheep) == 2.0
+
     # set repr prop to 1.0 and let the sheep reproduce
     sheep1 = Sheep(1,2.0,1.0,1.0,1.0,Male)
     sheep2 = Sheep(2,2.0,1.0,1.0,1.0,Female)
