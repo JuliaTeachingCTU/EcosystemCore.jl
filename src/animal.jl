@@ -40,6 +40,7 @@ end
 
 find_food(a::Animal, w::World) = find_rand(x->eats(a,x),w)
 eat!(::Animal,::Nothing,::World) = nothing
+eats(::Agent,::Agent) = false
 
 function reproduce!(a::A, w::World) where A<:Animal
     b = find_mate(a,w)
