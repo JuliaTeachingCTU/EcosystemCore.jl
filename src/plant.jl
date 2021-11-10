@@ -22,5 +22,3 @@ function Base.show(io::IO, p::Plant{P}) where P
     x = size(p)/max_size(p) * 100
     print(io,"$P  #$(id(p)) $(round(Int,x))% grown")
 end
-
-Base.show(io::IO, ::Type{Grass}) = print(io,"🌿")

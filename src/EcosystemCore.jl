@@ -13,11 +13,7 @@ abstract type Species end
 abstract type Agent{S<:Species} end
 
 abstract type PlantSpecies <: Species end
-abstract type Grass <: PlantSpecies end
-
 abstract type AnimalSpecies <: Species end
-abstract type Sheep <: AnimalSpecies end
-abstract type Wolf <: AnimalSpecies end
 
 abstract type Sex end
 abstract type Male <: Sex end

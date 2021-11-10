@@ -39,19 +39,6 @@ function find_rand(f, w::World)
 end
 
 find_food(a::Animal, w::World) = find_rand(x->eats(a,x),w)
-
-eats(::Animal{Sheep},p::Plant{Grass}) = size(p)>0
-eats(::Animal{Wolf},::Animal{Sheep}) = true
-eats(::Agent,::Agent) = false
-
-function eat!(a::Animal{Wolf}, b::Animal{Sheep}, w::World)
-    incr_energy!(a, energy(b)*Δenergy(a))
-    kill_agent!(b,w)
-end
-function eat!(a::Animal{Sheep}, b::Plant{Grass}, w::World)
-    incr_energy!(a, size(b)*Δenergy(a))
-    b.size = 0
-end
 eat!(::Animal,::Nothing,::World) = nothing
 
 function reproduce!(a::A, w::World) where A<:Animal
@@ -79,10 +66,9 @@ end
 
 kill_agent!(a::Animal, w::World) = delete!(w.agents, id(a))
 
-Base.show(io::IO, ::Type{Sheep}) = print(io,"🐑")
-Base.show(io::IO, ::Type{Wolf}) = print(io,"🐺")
 Base.show(io::IO, ::Type{Male}) = print(io,"♂")
 Base.show(io::IO, ::Type{Female}) = print(io,"♀")
+
 function Base.show(io::IO, a::Animal{A,S}) where {A,S}
     e = energy(a)
     d = Δenergy(a)
