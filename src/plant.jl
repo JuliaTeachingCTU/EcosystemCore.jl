@@ -4,6 +4,8 @@ mutable struct Plant{P<:PlantSpecies} <: Agent{P}
     max_size::Int
 end
 
+tosym(::Type{<:Plant{P}}) where P = Symbol("Plant$P")
+
 Base.size(a::Plant) = a.size
 max_size(a::Plant) = a.max_size
 grow!(a::Plant) = a.size += 1

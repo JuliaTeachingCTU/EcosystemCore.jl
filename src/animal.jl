@@ -6,6 +6,8 @@ mutable struct Animal{A<:AnimalSpecies,S<:Sex} <: Agent{A}
     foodprob::Float64
 end
 
+tosym(::Type{<:Animal{A,S}}) where {A,S} = Symbol("Animal$A$S")
+
 energy(a::Animal) = a.energy
 Δenergy(a::Animal) = a.Δenergy
 reprprob(a::Animal) = a.reprprob
@@ -34,8 +36,11 @@ function agent_step!(a::Animal, w::World)
 end
 
 function find_rand(f, w::World)
-    xs = filter(f, w.agents |> values |> collect)
-    isempty(xs) ? nothing : sample(xs)
+    xs = map(w.agents) do dict
+        x = filter(f, dict |> values |> collect)
+        isempty(x) ? nothing : sample(x)
+    end
+    sample([x for x in xs if !isnothing(x)])
 end
 
 find_food(a::Animal, w::World) = find_rand(x->eats(a,x),w)

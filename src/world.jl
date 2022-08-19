@@ -1,12 +1,19 @@
-mutable struct World{A<:Agent}
-    agents::Dict{Int,A}
+mutable struct World{T<:NamedTuple}
+    agents::T
     max_id::Int
 end
 
 function World(agents::Vector{<:Agent})
+    types = unique(typeof.(agents))
+    ags = map(types) do T
+        as = filter(x -> isa(x,T), agents)
+        Dict{Int,T}(id(a)=>a for a in as)
+    end
+    nt = (; zip(tosym.(types), ags)...)
+    
     ids = id.(agents)
     length(unique(ids)) == length(agents) || error("Not all agents have unique IDs!")
-    World(Dict(id(a)=>a for a in agents), maximum(ids))
+    World(nt, maximum(ids))
 end
 
 function world_step!(world::World)
@@ -18,8 +25,10 @@ function world_step!(world::World)
 end
 
 function Base.show(io::IO, w::World)
-    println(io, typeof(w))
-    for (_,a) in w.agents
-        println(io,"  $a")
+    println(io, "World")
+    for dict in w.agents
+        for (_,a) in dict
+            println(io,"  $a")
+        end
     end
 end
