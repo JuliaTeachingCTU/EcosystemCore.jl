@@ -7,7 +7,6 @@ mutable struct Animal{A<:AnimalSpecies,S<:Sex} <: Agent{A}
 end
 
 tosym(::Type{<:Animal{A,S}}) where {A,S} = Symbol("animal_$A$S")
-tosym(::Type{<:Plant{P}}) where P = Symbol("plant_$P")
 #tosym(::Type{<:Animal{Sheep,Male}}) where {A,S} = Symbol("sheep_male")
 #tosym(::Type{<:Animal{Sheep,Female}}) where {A,S} = Symbol("sheep_female")
 #tosym(::Type{<:Plant{Grass}}) where {A,S} = Symbol("grass")
@@ -83,6 +82,24 @@ function eat!(a::Animal{Sheep}, b::Plant{Grass}, w::World)
 end
 eat!(::Animal,::Nothing,::World) = nothing
 
+function setid(w::World, id::Int, a::Animal{Sheep,Female})
+    w.agents.animal_🐑♀[id] = a
+end
+function setid(w::World, id::Int, a::Animal{Sheep,Male})
+    w.agents.animal_🐑♂[id] = a
+end
+function setid(w::World, id::Int, a::Animal{Wolf,Male})
+    w.agents.animal_🐺♂[id] = a
+end
+function setid(w::World, id::Int, a::Animal{Wolf,Female})
+    w.agents.animal_🐺♀[id] = a
+end
+function setid(w::World, id::Int, p::Plant{Grass})
+    w.agents.plant_🌿[id] = p
+end
+
+
+
 function reproduce!(a::A, w::World) where A<:Animal
     b = find_mate(a,w)
     if !isnothing(b)
@@ -130,10 +147,27 @@ function mates(a,b)
     """)
 end
 
-function kill_agent!(a::Animal, w::World)
-    _, dict = getid(w, id(a))
+#function kill_agent!(a::Animal, w::World)
+#    dict = getfield(w.agents, tosym(a))
+#    delete!(dict, id(a))
+#end
+function kill_agent!(a::Animal{Wolf,Female}, w::World)
+    dict = w.agents.animal_🐺♂
     delete!(dict, id(a))
 end
+function kill_agent!(a::Animal{Wolf,Male}, w::World)
+    dict = w.agents.animal_🐺♀
+    delete!(dict, id(a))
+end
+function kill_agent!(a::Animal{Sheep,Female}, w::World)
+    dict = w.agents.animal_🐑♀
+    delete!(dict, id(a))
+end
+function kill_agent!(a::Animal{Sheep,Male}, w::World)
+    dict = w.agents.animal_🐑♂
+    delete!(dict, id(a))
+end
+
 
 Base.show(io::IO, ::Type{Sheep}) = print(io,"🐑")
 Base.show(io::IO, ::Type{Wolf}) = print(io,"🐺")

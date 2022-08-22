@@ -1,4 +1,6 @@
 using EcosystemCore
+using Random
+Random.seed!(0)
 
 function create_world()
     n_grass       = 500
@@ -32,16 +34,25 @@ EcosystemCore.mates(a::Animal{S,Female}, b::Animal{S,Male}) where S<:Species = t
 EcosystemCore.mates(a::Animal{S,Male}, b::Animal{S,Female}) where S<:Species = true
 EcosystemCore.mates(a::Agent, b::Agent) = false
 
-a = Wolf(1,1,1,1,1)
-# find_food(a, world)
+a = world.agents.animal_🐑♀ |> values |> first
+#@info find_food(a, world)
+#@btime find_food($a, $world)
+#
+#@info reproduce!(a, world)
+#@btime reproduce!($a, $world)
+
+@info agent_step!(a, world)
+@btime agent_step!($a, $world)
 # @code_warntype find_food(a, world)
-# error()
-
-
-using BenchmarkTools
-@btime find_food($a,$world)
-@btime simulate!($world, 10)
-
-# using Profile, ProfileSVG
-# @profview simulate!(world,100)
-# ProfileSVG.save("test.svg")
+#error()
+#
+#
+##using BenchmarkTools
+##@btime find_food($a,$world)
+##N = 10
+##@btime simulate!($world, $N)
+#
+#using Profile, ProfileSVG
+#@profview simulate!(world,100)
+#ProfileSVG.save("test.svg")
+#

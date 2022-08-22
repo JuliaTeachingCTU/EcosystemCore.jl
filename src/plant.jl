@@ -4,7 +4,7 @@ mutable struct Plant{P<:PlantSpecies} <: Agent{P}
     max_size::Int
 end
 
-tosym(::Type{<:Plant{P}}) where P = Symbol("Plant$P")
+tosym(::Type{<:Plant{P}}) where P = Symbol("plant_$P")
 
 Base.size(a::Plant) = a.size
 max_size(a::Plant) = a.max_size
@@ -14,7 +14,7 @@ grow!(a::Plant) = a.size += 1
 (A::Type{<:PlantSpecies})(id, s, m) = Plant{A}(id,s,m)
 (A::Type{<:PlantSpecies})(id, m) = (A::Type{<:PlantSpecies})(id,rand(1:m),m)
 
-function agent_step!(a::Plant, w::World)
+function agent_step!(a::Plant, ::World)
     if size(a) != max_size(a)
         grow!(a)
     end
