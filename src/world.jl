@@ -28,7 +28,7 @@ function setid(world, id, a)
     getfield(world.agents, tosym(a))[id] = a
 end
 
-allids(w::World) = vcat([collect(keys(as)) for as in w.agents]...)
+allids(w::World) = reduce(vcat, [collect(keys(as)) for as in w.agents])
 hasid(w::World, id::Int) = any(haskey(as,id) for as in w.agents)
 
 function world_step!(world::World)

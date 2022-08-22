@@ -32,7 +32,7 @@ EcosystemCore.mates(a::Animal{S,Female}, b::Animal{S,Male}) where S<:Species = t
 EcosystemCore.mates(a::Animal{S,Male}, b::Animal{S,Female}) where S<:Species = true
 EcosystemCore.mates(a::Agent, b::Agent) = false
 
-# a = Wolf(1,1,1,1,1)
+a = Wolf(1,1,1,1,1)
 # find_food(a, world)
 # @code_warntype find_food(a, world)
 # error()
@@ -40,7 +40,8 @@ EcosystemCore.mates(a::Agent, b::Agent) = false
 
 using BenchmarkTools
 @btime find_food($a,$world)
+@btime simulate!($world, 10)
 
-#using Profile, ProfileSVG
-#@profview simulate!(world,100)
-#ProfileSVG.save("test.svg")
+# using Profile, ProfileSVG
+# @profview simulate!(world,100)
+# ProfileSVG.save("test.svg")

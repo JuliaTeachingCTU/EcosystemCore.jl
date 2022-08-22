@@ -6,10 +6,11 @@ mutable struct Animal{A<:AnimalSpecies,S<:Sex} <: Agent{A}
     foodprob::Float64
 end
 
-tosym(::Type{<:Animal{A,S}}) where {A,S} = Symbol("animal$A$S")
-tosym(::Type{<:Animal{Sheep,Male}}) where {A,S} = Symbol("sheep_male")
-tosym(::Type{<:Animal{Sheep,Female}}) where {A,S} = Symbol("sheep_female")
-tosym(::Type{<:Plant{Grass}}) where {A,S} = Symbol("grass")
+tosym(::Type{<:Animal{A,S}}) where {A,S} = Symbol("animal_$A$S")
+tosym(::Type{<:Plant{P}}) where P = Symbol("plant_$P")
+#tosym(::Type{<:Animal{Sheep,Male}}) where {A,S} = Symbol("sheep_male")
+#tosym(::Type{<:Animal{Sheep,Female}}) where {A,S} = Symbol("sheep_female")
+#tosym(::Type{<:Plant{Grass}}) where {A,S} = Symbol("grass")
 tosym(::T) where T<:Animal = tosym(T)
 
 energy(a::Animal) = a.energy
@@ -56,15 +57,15 @@ end
 
 function find_food(::Animal{<:Wolf}, w::World)
     as = if rand() < 0.5
-        w.agents.sheep_female
+        w.agents.animal_🐑♀
     else
-        w.agents.sheep_male
+        w.agents.animal_🐑♂
     end |> values |> collect
     isempty(as) ? nothing : sample(as)
 end
 
 function find_food(::Animal{<:Sheep}, w::World)
-    as = filter(p -> size(p)>0, w.agent.grass)
+    as = filter(p -> size(p)>0, w.agents.plant_🌿 |> values |> collect)
     isempty(as) ? nothing : sample(as)
 end
 
@@ -95,7 +96,30 @@ function reproduce!(a::A, w::World) where A<:Animal
     end
 end
 
-find_mate(a::Animal, w::World) = find_rand(x->mates(a,x),w)
+#find_mate(a::Animal, w::World) = find_rand(x->mates(a,x),w)
+function find_mate(::Animal{<:Sheep,<:Female}, w::World)
+    as = w.agents.animal_🐑♂ |> values |> collect
+    isempty(as) ? nothing : sample(as)
+end
+function find_mate(::Animal{<:Sheep,<:Male}, w::World)
+    as = w.agents.animal_🐑♀ |> values |> collect
+    isempty(as) ? nothing : sample(as)
+end
+function find_mate(::Animal{<:Wolf,<:Male}, w::World)
+    as = w.agents.animal_🐺♀ |> values |> collect
+    isempty(as) ? nothing : sample(as)
+end
+function find_mate(::Animal{<:Wolf,<:Female}, w::World)
+    as = w.agents.animal_🐺♂ |> values |> collect
+    isempty(as) ? nothing : sample(as)
+end
+
+
+#function find_mate(::Animal{A,S}, w::World) where {A,S}
+#    T = oppositesex(S)
+#    as = getfield(w.agents, Symbol("animal_$A$T")) |> values |> collect
+#    isempty(as) ? nothing : sample(as)
+#end
 
 function mates(a,b)
     error("""You have to specify the mating behaviour of your agents by overloading `EcosystemCore.mates` e.g. like this:
