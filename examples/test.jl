@@ -21,6 +21,26 @@ function create_world()
 end
 world = create_world();
 
+function simulate!(world::World, iters::Int; cb=()->())
+    for i in 1:iters
+        world_step!(world)
+        cb()
+    end
+end
+
+EcosystemCore.mates(a::Animal{S,Female}, b::Animal{S,Male}) where S<:Species = true
+EcosystemCore.mates(a::Animal{S,Male}, b::Animal{S,Female}) where S<:Species = true
+EcosystemCore.mates(a::Agent, b::Agent) = false
+
+# a = Wolf(1,1,1,1,1)
+# find_food(a, world)
+# @code_warntype find_food(a, world)
+# error()
+
+
 using BenchmarkTools
-a = Sheep(0,1,1,1,1)
 @btime find_food($a,$world)
+
+#using Profile, ProfileSVG
+#@profview simulate!(world,100)
+#ProfileSVG.save("test.svg")

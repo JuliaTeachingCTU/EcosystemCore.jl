@@ -6,7 +6,11 @@ mutable struct Animal{A<:AnimalSpecies,S<:Sex} <: Agent{A}
     foodprob::Float64
 end
 
-tosym(::Type{<:Animal{A,S}}) where {A,S} = Symbol("Animal$A$S")
+tosym(::Type{<:Animal{A,S}}) where {A,S} = Symbol("animal$A$S")
+tosym(::Type{<:Animal{Sheep,Male}}) where {A,S} = Symbol("sheep_male")
+tosym(::Type{<:Animal{Sheep,Female}}) where {A,S} = Symbol("sheep_female")
+tosym(::Type{<:Plant{Grass}}) where {A,S} = Symbol("grass")
+tosym(::T) where T<:Animal = tosym(T)
 
 energy(a::Animal) = a.energy
 Δenergy(a::Animal) = a.Δenergy
@@ -35,15 +39,34 @@ function agent_step!(a::Animal, w::World)
     return a
 end
 
-function find_rand(f, w::World)
-    xs = map(w.agents) do dict
-        x = filter(f, dict |> values |> collect)
-        isempty(x) ? nothing : sample(x)
-    end
-    sample([x for x in xs if !isnothing(x)])
+#function find_rand(f, w::World)
+#    xs = map(w.agents) do dict
+#        x = filter(f, dict |> values |> collect)
+#        isempty(x) ? nothing : sample(x)
+#    end
+#    ys = [x for x in xs if !isnothing(x)]
+#    isempty(ys) ? nothing : sample(ys)
+#end
+
+#find_food(a::Animal, w::World) = find_rand(x->eats(a,x),w)
+
+#function find_rand(f)
+#    
+#end
+
+function find_food(::Animal{<:Wolf}, w::World)
+    as = if rand() < 0.5
+        w.agents.sheep_female
+    else
+        w.agents.sheep_male
+    end |> values |> collect
+    isempty(as) ? nothing : sample(as)
 end
 
-find_food(a::Animal, w::World) = find_rand(x->eats(a,x),w)
+function find_food(::Animal{<:Sheep}, w::World)
+    as = filter(p -> size(p)>0, w.agent.grass)
+    isempty(as) ? nothing : sample(as)
+end
 
 eats(::Animal{Sheep},p::Plant{Grass}) = size(p)>0
 eats(::Animal{Wolf},::Animal{Sheep}) = true
@@ -66,7 +89,8 @@ function reproduce!(a::A, w::World) where A<:Animal
         a_vals = [getproperty(a,n) for n in fieldnames(A) if n!=:id]
         new_id = w.max_id + 1
         â = A(new_id, a_vals...)
-        w.agents[id(â)] = â
+        setid(w, id(â), â)
+        #w.agents[id(â)] = â
         w.max_id = new_id
     end
 end
@@ -82,7 +106,10 @@ function mates(a,b)
     """)
 end
 
-kill_agent!(a::Animal, w::World) = delete!(w.agents, id(a))
+function kill_agent!(a::Animal, w::World)
+    _, dict = getid(w, id(a))
+    delete!(dict, id(a))
+end
 
 Base.show(io::IO, ::Type{Sheep}) = print(io,"🐑")
 Base.show(io::IO, ::Type{Wolf}) = print(io,"🐺")
