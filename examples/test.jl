@@ -34,25 +34,27 @@ EcosystemCore.mates(a::Animal{S,Female}, b::Animal{S,Male}) where S<:Species = t
 EcosystemCore.mates(a::Animal{S,Male}, b::Animal{S,Female}) where S<:Species = true
 EcosystemCore.mates(a::Agent, b::Agent) = false
 
-a = world.agents.animal_🐑♀ |> values |> first
+#using BenchmarkTools
+a = world.agents.sheep_female |> values |> first
 #@info find_food(a, world)
 #@btime find_food($a, $world)
 #
 #@info reproduce!(a, world)
 #@btime reproduce!($a, $world)
+#
+#a = world.agents.sheep_female[582]
+#@info agent_step!(a, world)
+#@btime agent_step!($a, $world)
+## @code_warntype find_food(a, world)
+##error()
+##
+##
+###using BenchmarkTools
+###@btime find_food($a,$world)
+###N = 10
+###@btime simulate!($world, $N)
 
-@info agent_step!(a, world)
-@btime agent_step!($a, $world)
-# @code_warntype find_food(a, world)
-#error()
-#
-#
-##using BenchmarkTools
-##@btime find_food($a,$world)
-##N = 10
-##@btime simulate!($world, $N)
-#
-#using Profile, ProfileSVG
-#@profview simulate!(world,100)
+using Profile, ProfileSVG
+@profview simulate!(world,100)
 #ProfileSVG.save("test.svg")
-#
+

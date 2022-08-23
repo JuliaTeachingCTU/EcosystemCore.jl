@@ -1,4 +1,6 @@
 mutable struct World{T<:NamedTuple}
+    # this is a NamedTuple of Dict{Int,<:Agent}
+    # but I don't know how to express that as a parametric type
     agents::T
     max_id::Int
 end
@@ -16,31 +18,8 @@ function World(agents::Vector{<:Agent})
     World(nt, maximum(ids))
 end
 
-#function getid(world, id)
-#    #for dict in world.agents
-#    map(world.agents) do dict
-#        if haskey(dict, id)
-#            return dict[id], dict
-#        end
-#    end
-#end
-
-#function setid(world, id, a)
-#    getfield(world.agents, tosym(a))[id] = a
-#end
-# 
-# allids(w::World) = reduce(vcat, [collect(keys(as)) for as in w.agents])
-# hasid(w::World, id::Int) = any(haskey(as,id) for as in w.agents)
-
 function world_step!(world::World)
-    #for id in deepcopy(allids(world))
-    #    !hasid(world,id) && continue
-    #    #a = world.agents[id]
-    #    a, _ = getid(world, id)
-    #    agent_step!(a,world)
-    #end
-    map(world.agents) do species
-    #for species in world.agents
+    for species in world.agents
         ids = deepcopy(keys(species))
         for id in ids
             !haskey(species,id) && continue

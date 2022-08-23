@@ -6,10 +6,12 @@ mutable struct Animal{A<:AnimalSpecies,S<:Sex} <: Agent{A}
     foodprob::Float64
 end
 
-tosym(::Type{<:Animal{A,S}}) where {A,S} = Symbol("animal_$A$S")
-#tosym(::Type{<:Animal{Sheep,Male}}) where {A,S} = Symbol("sheep_male")
-#tosym(::Type{<:Animal{Sheep,Female}}) where {A,S} = Symbol("sheep_female")
-#tosym(::Type{<:Plant{Grass}}) where {A,S} = Symbol("grass")
+#tosym(::Type{<:Animal{A,S}}) where {A,S} = Symbol("animal_$A$S")
+tosym(::Type{<:Animal{Sheep,Male}}) = Symbol("sheep_male")
+tosym(::Type{<:Animal{Sheep,Female}}) = Symbol("sheep_female")
+tosym(::Type{<:Plant{Grass}}) = Symbol("grass")
+tosym(::Type{<:Animal{Wolf,Female}}) = Symbol("wolf_female")
+tosym(::Type{<:Animal{Wolf,Male}}) = Symbol("wolf_male")
 tosym(::T) where T<:Animal = tosym(T)
 
 energy(a::Animal) = a.energy
@@ -56,21 +58,17 @@ end
 
 function find_food(::Animal{<:Wolf}, w::World)
     as = if rand() < 0.5
-        w.agents.animal_🐑♀
+        w.agents.sheep_female
     else
-        w.agents.animal_🐑♂
+        w.agents.sheep_male
     end |> values |> collect
     isempty(as) ? nothing : sample(as)
 end
 
 function find_food(::Animal{<:Sheep}, w::World)
-    as = filter(p -> size(p)>0, w.agents.plant_🌿 |> values |> collect)
+    as = filter(p -> size(p)>0, w.agents.grass |> values |> collect)
     isempty(as) ? nothing : sample(as)
 end
-
-eats(::Animal{Sheep},p::Plant{Grass}) = size(p)>0
-eats(::Animal{Wolf},::Animal{Sheep}) = true
-eats(::Agent,::Agent) = false
 
 function eat!(a::Animal{Wolf}, b::Animal{Sheep}, w::World)
     incr_energy!(a, energy(b)*Δenergy(a))
@@ -82,23 +80,8 @@ function eat!(a::Animal{Sheep}, b::Plant{Grass}, w::World)
 end
 eat!(::Animal,::Nothing,::World) = nothing
 
-function setid(w::World, id::Int, a::Animal{Sheep,Female})
-    w.agents.animal_🐑♀[id] = a
-end
-function setid(w::World, id::Int, a::Animal{Sheep,Male})
-    w.agents.animal_🐑♂[id] = a
-end
-function setid(w::World, id::Int, a::Animal{Wolf,Male})
-    w.agents.animal_🐺♂[id] = a
-end
-function setid(w::World, id::Int, a::Animal{Wolf,Female})
-    w.agents.animal_🐺♀[id] = a
-end
-function setid(w::World, id::Int, p::Plant{Grass})
-    w.agents.plant_🌿[id] = p
-end
 
-
+setid(w::World, id::Int, a::Animal) = getfield(w.agents, tosym(a))[id] = a
 
 function reproduce!(a::A, w::World) where A<:Animal
     b = find_mate(a,w)
@@ -113,30 +96,12 @@ function reproduce!(a::A, w::World) where A<:Animal
     end
 end
 
-#find_mate(a::Animal, w::World) = find_rand(x->mates(a,x),w)
-function find_mate(::Animal{<:Sheep,<:Female}, w::World)
-    as = w.agents.animal_🐑♂ |> values |> collect
+oppositesex(::Type{Female}) = Male
+oppositesex(::Type{Male}) = Female
+function find_mate(::Animal{A,S}, w::World) where {A,S}
+    as = getfield(w.agents, tosym(Animal{A,oppositesex(S)})) |> values |> collect
     isempty(as) ? nothing : sample(as)
 end
-function find_mate(::Animal{<:Sheep,<:Male}, w::World)
-    as = w.agents.animal_🐑♀ |> values |> collect
-    isempty(as) ? nothing : sample(as)
-end
-function find_mate(::Animal{<:Wolf,<:Male}, w::World)
-    as = w.agents.animal_🐺♀ |> values |> collect
-    isempty(as) ? nothing : sample(as)
-end
-function find_mate(::Animal{<:Wolf,<:Female}, w::World)
-    as = w.agents.animal_🐺♂ |> values |> collect
-    isempty(as) ? nothing : sample(as)
-end
-
-
-#function find_mate(::Animal{A,S}, w::World) where {A,S}
-#    T = oppositesex(S)
-#    as = getfield(w.agents, Symbol("animal_$A$T")) |> values |> collect
-#    isempty(as) ? nothing : sample(as)
-#end
 
 function mates(a,b)
     error("""You have to specify the mating behaviour of your agents by overloading `EcosystemCore.mates` e.g. like this:
@@ -147,24 +112,8 @@ function mates(a,b)
     """)
 end
 
-#function kill_agent!(a::Animal, w::World)
-#    dict = getfield(w.agents, tosym(a))
-#    delete!(dict, id(a))
-#end
-function kill_agent!(a::Animal{Wolf,Female}, w::World)
-    dict = w.agents.animal_🐺♂
-    delete!(dict, id(a))
-end
-function kill_agent!(a::Animal{Wolf,Male}, w::World)
-    dict = w.agents.animal_🐺♀
-    delete!(dict, id(a))
-end
-function kill_agent!(a::Animal{Sheep,Female}, w::World)
-    dict = w.agents.animal_🐑♀
-    delete!(dict, id(a))
-end
-function kill_agent!(a::Animal{Sheep,Male}, w::World)
-    dict = w.agents.animal_🐑♂
+function kill_agent!(a::Animal, w::World)
+    dict = getfield(w.agents, tosym(a))
     delete!(dict, id(a))
 end
 
