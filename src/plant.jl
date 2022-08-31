@@ -4,25 +4,24 @@ mutable struct Plant{P<:PlantSpecies} <: Agent{P}
     max_size::Int
 end
 
-tosym(::Type{<:Plant{P}}) where P = Symbol("plant_$P")
-
-Base.size(a::Plant) = a.size
-max_size(a::Plant) = a.max_size
-grow!(a::Plant) = a.size += 1
-
 # constructor for all Plant{<:PlantSpecies} callable as PlantSpecies(...)
 (A::Type{<:PlantSpecies})(id, s, m) = Plant{A}(id,s,m)
 (A::Type{<:PlantSpecies})(id, m) = (A::Type{<:PlantSpecies})(id,rand(1:m),m)
 
-function agent_step!(a::Plant, ::World)
-    if size(a) != max_size(a)
-        grow!(a)
-    end
-end
+# default specific for Grass
+Grass(id; max_size=10) = Grass(id, rand(1:max_size), max_size)
+
+find_agent(::Type{P}, w::World) where P<:PlantSpecies = find_agent(Plant{P}, w)
 
 function Base.show(io::IO, p::Plant{P}) where P
-    x = size(p)/max_size(p) * 100
-    print(io,"$P  #$(id(p)) $(round(Int,x))% grown")
+    x = p.size/p.max_size * 100
+    print(io,"$P  #$(p.id) $(round(Int,x))% grown")
 end
 
 Base.show(io::IO, ::Type{Grass}) = print(io,"🌿")
+
+function agent_step!(p::Plant, ::World)
+    if p.size < p.max_size
+        p.size += 1
+    end
+end

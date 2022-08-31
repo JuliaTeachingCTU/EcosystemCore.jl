@@ -6,126 +6,96 @@ mutable struct Animal{A<:AnimalSpecies,S<:Sex} <: Agent{A}
     foodprob::Float64
 end
 
-#tosym(::Type{<:Animal{A,S}}) where {A,S} = Symbol("animal_$A$S")
-tosym(::Type{<:Animal{Sheep,Male}}) = Symbol("sheep_male")
-tosym(::Type{<:Animal{Sheep,Female}}) = Symbol("sheep_female")
-tosym(::Type{<:Plant{Grass}}) = Symbol("grass")
-tosym(::Type{<:Animal{Wolf,Female}}) = Symbol("wolf_female")
-tosym(::Type{<:Animal{Wolf,Male}}) = Symbol("wolf_male")
-tosym(::T) where T<:Animal = tosym(T)
-
-energy(a::Animal) = a.energy
-Δenergy(a::Animal) = a.Δenergy
-reprprob(a::Animal) = a.reprprob
-foodprob(a::Animal) = a.foodprob
-energy!(a::Animal, e) = a.energy = e
-incr_energy!(a::Animal, Δe) = energy!(a, energy(a)+Δe)
-
-function (A::Type{<:AnimalSpecies})(id::Int, E, ΔE, pr, pf, S=rand(Bool) ? Female : Male)
+# AnimalSpecies constructors
+function (A::Type{<:AnimalSpecies})(id::Int,E::T,ΔE::T,pr::T,pf::T,S::Type{<:Sex}) where T
     Animal{A,S}(id,E,ΔE,pr,pf)
 end
 
-function agent_step!(a::Animal, w::World)
-    incr_energy!(a,-1)
-    if rand() <= foodprob(a)
-        dinner = find_food(a,w)
-        eat!(a, dinner, w)
-    end
-    if energy(a) <= 0
-        kill_agent!(a,w)
-        return
-    end
-    if rand() <= reprprob(a)
-        reproduce!(a,w)
-    end
-    return a
+# get the per species defaults back
+randsex() = rand(Bool) ? Female : Male
+Sheep(id; E=4.0, ΔE=0.2, pr=0.6, pf=0.6, S=randsex()) = Sheep(id, E, ΔE, pr, pf, S)
+Wolf(id; E=10.0, ΔE=8.0, pr=0.1, pf=0.2, S=randsex()) = Wolf(id, E, ΔE, pr, pf, S)
+
+function Base.show(io::IO, a::Animal{A,S}) where {A<:AnimalSpecies,S<:Sex}
+    e = a.energy
+    d = a.Δenergy
+    pr = a.reprprob
+    pf = a.foodprob
+    print(io, "$A$S #$(a.id) E=$e ΔE=$d pr=$pr pf=$pf")
 end
 
-#function find_rand(f, w::World)
-#    xs = map(w.agents) do dict
-#        x = filter(f, dict |> values |> collect)
-#        isempty(x) ? nothing : sample(x)
-#    end
-#    ys = [x for x in xs if !isnothing(x)]
-#    isempty(ys) ? nothing : sample(ys)
-#end
-
-#find_food(a::Animal, w::World) = find_rand(x->eats(a,x),w)
-
-#function find_rand(f)
-#    
-#end
-
-function find_food(::Animal{<:Wolf}, w::World)
-    as = if rand() < 0.5
-        w.agents.sheep_female
-    else
-        w.agents.sheep_male
-    end |> values |> collect
-    isempty(as) ? nothing : sample(as)
-end
-
-function find_food(::Animal{<:Sheep}, w::World)
-    as = filter(p -> size(p)>0, w.agents.grass |> values |> collect)
-    isempty(as) ? nothing : sample(as)
-end
-
-function eat!(a::Animal{Wolf}, b::Animal{Sheep}, w::World)
-    incr_energy!(a, energy(b)*Δenergy(a))
-    kill_agent!(b,w)
-end
-function eat!(a::Animal{Sheep}, b::Plant{Grass}, w::World)
-    incr_energy!(a, size(b)*Δenergy(a))
-    b.size = 0
-end
-eat!(::Animal,::Nothing,::World) = nothing
-
-
-setid(w::World, id::Int, a::Animal) = getfield(w.agents, tosym(a))[id] = a
-
-function reproduce!(a::A, w::World) where A<:Animal
-    b = find_mate(a,w)
-    if !isnothing(b)
-        energy!(a, energy(a)/2)
-        a_vals = [getproperty(a,n) for n in fieldnames(A) if n!=:id]
-        new_id = w.max_id + 1
-        â = A(new_id, a_vals...)
-        setid(w, id(â), â)
-        #w.agents[id(â)] = â
-        w.max_id = new_id
-    end
-end
-
-oppositesex(::Type{Female}) = Male
-oppositesex(::Type{Male}) = Female
-function find_mate(::Animal{A,S}, w::World) where {A,S}
-    as = getfield(w.agents, tosym(Animal{A,oppositesex(S)})) |> values |> collect
-    isempty(as) ? nothing : sample(as)
-end
-
-function mates(a,b)
-    error("""You have to specify the mating behaviour of your agents by overloading `EcosystemCore.mates` e.g. like this:
-
-        EcosystemCore.mates(a::Animal{S,Female}, b::Animal{S,Male}) where S<:Species = true
-        EcosystemCore.mates(a::Animal{S,Male}, b::Animal{S,Female}) where S<:Species = true
-        EcosystemCore.mates(a::Agent, b::Agent) = false
-    """)
-end
-
-function kill_agent!(a::Animal, w::World)
-    dict = getfield(w.agents, tosym(a))
-    delete!(dict, id(a))
-end
-
-
+# note that for new species/sexes we will only have to overload `show` on the
+# abstract species/sex types like below!
 Base.show(io::IO, ::Type{Sheep}) = print(io,"🐑")
 Base.show(io::IO, ::Type{Wolf}) = print(io,"🐺")
 Base.show(io::IO, ::Type{Male}) = print(io,"♂")
 Base.show(io::IO, ::Type{Female}) = print(io,"♀")
-function Base.show(io::IO, a::Animal{A,S}) where {A,S}
-    e = energy(a)
-    d = Δenergy(a)
-    pr = reprprob(a)
-    pf = foodprob(a)
-    print(io,"$A$S #$(id(a)) E=$e ΔE=$d pr=$pr pf=$pf")
+
+
+function eat!(wolf::Animal{Wolf}, sheep::Animal{Sheep}, w::World)
+    wolf.energy += sheep.energy * wolf.Δenergy
+    kill_agent!(sheep,w)
+end
+function eat!(sheep::Animal{Sheep}, grass::Plant{Grass}, w::World)
+    sheep.energy += grass.size * sheep.Δenergy
+    grass.size = 0
+end
+eat!(::Animal, ::Nothing, ::World) = nothing
+
+
+function find_agent(::Type{A}, w::World) where A<:AnimalSpecies
+    df = getfield(w.agents, tosym(Animal{A,Female}))
+    af = df |> values |> collect
+
+    dm = getfield(w.agents, tosym(Animal{A,Male}))
+    am = dm |> values |> collect
+
+    nf = length(af)
+    nm = length(am)
+    if nf == 0
+        # no females -> sample males
+        isempty(am) ? nothing : sample(am)
+    elseif nm == 0
+        # no males -> sample females
+        isempty(af) ? nothing : sample(af)
+    else
+        # both -> sample uniformly from one or the other
+        rand() < nf/(nf+nm) ? sample(am) : sample(af)
+    end
+end
+
+find_food(::Animal{<:Wolf}, w::World) = find_agent(Sheep, w)
+find_food(::Animal{<:Sheep}, w::World) = find_agent(Grass, w)
+
+find_mate(::Animal{A,Female}, w::World) where A<:AnimalSpecies = find_agent(Animal{A,Male}, w)
+find_mate(::Animal{A,Male}, w::World) where A<:AnimalSpecies = find_agent(Animal{A,Female}, w)
+
+function reproduce!(a::Animal{A,S}, w::World) where {A,S}
+    m = find_mate(a,w)
+    if !isnothing(m)
+        a.energy = a.energy / 2
+        vals = [getproperty(a,n) for n in fieldnames(Animal) if n!=:id]
+        new_id = w.max_id + 1
+        T = typeof(a)
+        ŝ = T(new_id, vals...)
+        getfield(w.agents, tosym(T))[ŝ.id] = ŝ
+        w.max_id = new_id
+    end
+end
+
+
+function agent_step!(a::Animal, w::World)
+    a.energy -= 1
+    if rand() <= a.foodprob
+        dinner = find_food(a,w)
+        eat!(a, dinner, w)
+    end
+    if a.energy <= 0
+        kill_agent!(a,w)
+        return
+    end
+    if rand() <= a.reprprob
+        reproduce!(a,w)
+    end
+    return a
 end
